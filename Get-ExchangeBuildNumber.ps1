@@ -1,20 +1,71 @@
-﻿function Get-ExchangeBuildNumber($ProductName)
+﻿function Get-ExchangeBuildNumber
 {
-	$FileName = [Environment]::GetFolderPath('MyDocuments') + "`\Get-ExchangeBuildNumber`\ExchangeBuildNumbers.csv"
-	if(!(Test-Path $Dest))
-	{
-		Update-ExchangeBuildNumberDefinition
-	}
-	
-	$Builds = Import-Csv $FileName
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Mandatory=$True,Position=1,ValueFromPipeline=$True)]
+        [string]$ProductName
+    )
 
-	foreach($Build in $Builds)
-	{
-		if($Build."Product Name" -like "*$ProductName*")
-		{
-			Write-Output ($Build."Product Name" + " : " + $Build."Build Number")
-		}
-	}
+    Begin
+    {
+        function CreateLogString
+        {
+            [CmdletBinding()]
+            param
+            (
+                [Parameter(Mandatory=$True,Position=1,ValueFromPipeline=$True)]
+                [string]$Message
+            )
+
+            return (Get-Date).ToUniversalTime().ToString("[HH:mm:ss.fff") + " GMT] Get-ExchangeBuildNumber : " + $Message
+        }
+
+        function Setup
+        {
+            Write-Verbose (CreateLogString "Beginning processing.")
+
+            Set-Variable -Name FileName -Value ([Environment]::GetFolderPath('MyDocuments') + "`\Get-ExchangeBuildNumber`\ExchangeBuildNumbers.csv") -Scope 1
+
+	        if(!(Test-Path $FileName))
+	        {
+                Write-Verbose (CreateLogString "Definition file was not found. Invoke Update-ExchangeBuildNumberDefinition to download definition file.")
+		        Update-ExchangeBuildNumberDefinition
+	        }
+
+            Set-Variable -Name SetupDone -Value $true -Scope 1
+
+            Write-Verbose (CreateLogString "Setup was completed.")
+        }
+
+        Setup
+    }
+
+    Process
+    {
+        if (-not $SetupDone) { Setup }
+
+        Write-Verbose (CreateLogString "Import definition file.")
+
+        $Builds = Import-Csv $FileName
+        $Found = $false
+
+	    foreach($Build in $Builds)
+	    {
+		    if($Build."Product Name" -like "*$ProductName*")
+		    {
+			    Write-Output ($Build."Product Name" + " : " + $Build."Build Number")
+                $found = $true
+		    }
+	    }
+
+        if (-not $found)
+        {
+            Write-Verbose (CreateLogString "Nothing was found.")
+        }
+    }
+
+    End {}
 }
 
 function Update-ExchangeBuildNumberDefinition()
