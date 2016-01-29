@@ -137,7 +137,7 @@ function Get-ExchangeProductName
 
         if (($LessThen -ne 0))
         {
-            return $BuidNumber.ToString() + " is greater than " + $Builds[$LessThen - 1]."Product Name" + " and less then" + $Builds[$LessThen]."Product Name"
+            return $BuidNumber.ToString() + " is greater than " + $Builds[$LessThen - 1]."Product Name" + " and less than " + $Builds[$LessThen]."Product Name"
         }
         else
         {
